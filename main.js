@@ -11,6 +11,7 @@ let keyframes = [
     {
         activeVerse: 1,
         activeLines: [1, 2],
+        svgUpdate: drawGraph,
     },
 ]
 
@@ -40,8 +41,8 @@ let chartWidth;
 let chartHeight;
 
 // Declare both scales too
-let xScale;
-let yScale;
+let x;
+let y;
 
 // TODO recreate the updateBarChart function from the tutorial
 // As with the draw bar chart function we will pass the data we want to draw and the title of the graph
@@ -51,65 +52,45 @@ let yScale;
 // There might be situations where we want to update the chart without updating the title
 // To handle this we pass a default value to the title of an empty string
 function updateBarChart(data, title = "") {
-    //Update our scales so that they match the new data
-    //As our svg is staying the same dimensions each time we only need to update the domains
-    xScale.domain(data.map(d => d.color));
-    yScale.domain([0, d3.max(data, d => d.count)]).nice();
 
-    // We want to make a selection of the existing bars in the chart
-    // This line of code will bind the new data we have loaded to our bars
-    const bars = chart.selectAll(".bar")
-        .data(data, d => d.color);
+    // set the parameters for the histogram
+    const histogram = d3.histogram()
+        .value(function(d) { return d.Year; })   // I need to give the vector of value
+        .domain(x.domain())  // then the domain of the graphic
+        .thresholds(x.ticks(5)); // then the numbers of bins
 
-    // First we want to remove any bars that we no longer want to display
-    // bars.exit() is a d3 selection that will return any bars that are not in the new selection.
-    // when we call this function to initially draw the bar chart this won't return anything because there were no bars to begin with
-    // when we call this to draw the violet bar chart when the rose one was being displayed the exit selection will be the bars that had values in the rose dataset but don't exist in the violet one
-    // calling remove on this selection will remove all these bars from the graph
-    bars.exit()
-        .transition() // Declare we want to do a transition
-        .duration(transitionDuration)
-        .attr("y", chartHeight)
-        .attr("height", 0)
-        .remove();
+    // And apply this function to data to get the bins
+    var bins = histogram(data);
 
-    // Now we want to move any bars that had values in the old dataset but now have new values or locations
-    bars.transition() // Declare we want to do a transition
-        .duration(transitionDuration)
-        .attr("x", d => xScale(d.color))
-        .attr("y", d => yScale(d.count))
-        .attr("height", d => chartHeight - yScale(d.count));
+    // Y axis: scale and draw:
+    y = d3.scaleLinear()
+      .range([chartHeight, 0]);
+    
+    // y.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+    y.domain([0, d3.max(bins, function(d) { return d.length; })]);
 
-    // Finally we will add any bars that are new
-    // To do that we will use the d3 built in function .enter() which provides a selection of any new values
-    bars.enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", d => xScale(d.color))
-        .attr("y", chartHeight) // Set initial y position below the chart so we can't see it
-        .attr("width", xScale.bandwidth())
-        .attr("height", 0) // Set initial height to 0 so there is nothing to display
-        .attr("fill", "#999")
-        .transition() // Declare we want to do a transition
-        .duration(transitionDuration)
-        .attr("y", d => yScale(d.count)) // Update the y value so that the bar is in the right location vertically
-        .attr("height", d => chartHeight - yScale(d.count)); // Update the height value
+    svg.append("g")
+        .call(d3.axisLeft(y));
 
-    // Next let's update the axes so they are displayed correctly
-    chart.select(".x-axis")
-        .transition() // Declare we want to do a transition
-        .duration(transitionDuration)
-        .call(d3.axisBottom(xScale));
-
-    chart.select(".y-axis")
-        .transition() // Declare we want to do a transition
-        .duration(transitionDuration)
-        .call(d3.axisLeft(yScale));
-
-    // And finally if a new title has been specified we will update the title too
-    if (title.length > 0) {
-        svg.select("#chart-title")
-            .text(title);
-    }
+    // append the bar rectangles to the svg element
+    svg.selectAll("rect")
+    .data(bins)
+    .enter()
+    .append("rect")
+        .attr("x", 1)
+        .attr("transform", function(d) { return "translate(" + (x(d.x0) * .9 + 50) + "," + (y(d.length) + 30) + ")"; })
+        // .attr("width", function(d) { return x(d.x1) - x(d.x0) - 15 ; })
+        .attr("width", 50)
+        .attr("height", function(d) { return chartHeight - y(d.length); })
+        .style("fill", "#FFFFE0");
+    
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", 20)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("fill", "white")
+        .text(title);
 }
 
 function forwardClicked() {
@@ -158,7 +139,7 @@ function updateActiveVerse(id) {
     d3.select("#verse" + id).classed("active-verse", true);
 
     // Scroll the column so the chosen verse is centred
-    scrollLeftColumnToActiveVerse(id);
+    scrollCenterColumnToActiveVerse(id);
 }
 
 // TODO write a function to update the active line
@@ -176,7 +157,7 @@ function updateActiveLine(vid, lid) {
 // TODO scroll to the desired position
 // TODO call this function when updating the active verse
 // TODO write a function to scroll the center column to the right place
-function scrollLeftColumnToActiveVerse(id) {
+function scrollCenterColumnToActiveVerse(id) {
     // First we want to select the div that is displaying our text content
     var centerColumn = document.querySelector(".center-column-content");
 
@@ -203,7 +184,7 @@ function scrollLeftColumnToActiveVerse(id) {
 
 
 // TODO write a function to initialize the svg properly
-function initializeSVG() {
+function initializeSVG(data) {
     svg.attr("width", width);
     svg.attr("height", height);
 
@@ -216,27 +197,24 @@ function initializeSVG() {
     chart = svg.append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    xScale = d3.scaleBand()
-        .domain([])
-        .range([0, chartWidth])
-        .padding(0.1);
+    x = d3.scaleLinear()
+        .domain([1990, 2022])
+        .range([0, chartWidth]);
 
-    yScale = d3.scaleLinear()
+    y = d3.scaleLinear()
         .domain([])
         .nice()
         .range([chartHeight, 0]);
 
     // Add x-axis
     chart.append("g")
-        .attr("class", "x-axis")
-        .attr("transform", `translate(0,${chartHeight})`)
-        .call(d3.axisBottom(xScale))
-        .selectAll("text");
+        .attr("transform", "translate(0," + chartHeight + ")")
+        .call(d3.axisBottom(x));
 
     // Add y-axis
     chart.append("g")
         .attr("class", "y-axis")
-        .call(d3.axisLeft(yScale))
+        .call(d3.axisLeft(y))
         .selectAll("text");
 
     // Add title
@@ -255,7 +233,7 @@ async function initialize() {
     await loadData();
 
     // TODO initalise the SVG
-    initializeSVG();
+    initializeSVG(asianData);
 
     // TODO draw the first keyframe
     drawKeyframe(keyframeIndex);
