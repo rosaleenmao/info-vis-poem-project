@@ -11,8 +11,53 @@ let keyframes = [
     {
         activeVerse: 1,
         activeLines: [1, 2],
-        svgUpdate: drawGraph,
+        imgUpdate: "verse1.jpeg",
     },
+    {
+        activeVerse: 2,
+        activeLines: [1, 2],
+        imgUpdate: "verse2.png",
+    },
+    {
+        activeVerse: 3,
+        activeLines: [1, 2],
+        imgUpdate: "verse3.png",
+    },
+    {
+        activeVerse: 4,
+        activeLines: [1, 2],
+        imgUpdate: "verse4.png",
+    },
+    {
+        activeVerse: 5,
+        activeLines: [1, 2],
+        imgUpdate: "verse5.png",
+    },
+    {
+        activeVerse: 6,
+        activeLines: [1, 2],
+        imgUpdate: "verse6.png",
+    },
+    {
+        activeVerse: 7,
+        activeLines: [1, 2],
+        imgUpdate: "verse7.png",
+    },
+    {
+        activeVerse: 8,
+        activeLines: [1, 2],
+        imgUpdate: "verse8.png",
+    },
+    {
+        activeVerse: 9,
+        activeLines: [1, 2],
+        imgUpdate: "verse9.png",
+    },
+    {
+        activeVerse: 10,
+        activeLines: [1, 2],
+        imgUpdate: "verse10.png",
+    }
 ]
 
 // Initialize two global variables to store the data when it is loaded
@@ -44,13 +89,6 @@ let chartHeight;
 let x;
 let y;
 
-// TODO recreate the updateBarChart function from the tutorial
-// As with the draw bar chart function we will pass the data we want to draw and the title of the graph
-// There might be situations where we want to update the chart without updating the title
-// To handle this we pass a default value to the title of an empty string
-// As with the draw bar chart function we will pass the data we want to draw and the title of the graph
-// There might be situations where we want to update the chart without updating the title
-// To handle this we pass a default value to the title of an empty string
 function updateBarChart(data, title = "") {
 
     // set the parameters for the histogram
@@ -119,8 +157,9 @@ function forwardClicked() {
         updateActiveLine(kf.activeVerse, line);
     }
 
-    if (kf.svgUpdate) {
-        kf.svgUpdate();
+    if (kf.imgUpdate) {
+        var newSrc = "assets/" + kf.imgUpdate;
+        document.getElementById("img").src=newSrc;
     }
 }
 
@@ -137,9 +176,6 @@ function updateActiveVerse(id) {
 
     // Update the class list of the desired verse so that it now includes the class "active-verse"
     d3.select("#verse" + id).classed("active-verse", true);
-
-    // Scroll the column so the chosen verse is centred
-    scrollCenterColumnToActiveVerse(id);
 }
 
 // TODO write a function to update the active line
@@ -149,38 +185,6 @@ function updateActiveLine(vid, lid) {
     // Update the class list of the relevant lines
     thisVerse.select("#line" + lid).classed("active-line", true);
   }
-
-// TODO select the div displaying the center column content
-// TODO select the verse we want to display
-// TODO calculate the bounding rectangles of both of these elements
-// TODO calculate the desired scroll position
-// TODO scroll to the desired position
-// TODO call this function when updating the active verse
-// TODO write a function to scroll the center column to the right place
-function scrollCenterColumnToActiveVerse(id) {
-    // First we want to select the div that is displaying our text content
-    var centerColumn = document.querySelector(".center-column-content");
-
-    // Now we select the actual verse we would like to be centred, this will be the <ul> element containing the verse
-    var activeVerse = document.getElementById("verse" + id);
-
-    // The getBoundingClientRect() is a built in function that will return an object indicating the exact position
-    // Of the relevant element relative to the current viewport.
-    // To see a full breakdown of this read the documentation here: https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
-    var verseRect = activeVerse.getBoundingClientRect();
-    var centerColumnRect = centerColumn.getBoundingClientRect();
-
-    // Now we calculate the exact location we would like to scroll to in order to centre the relevant verse
-    // Take a moment to rationalise that this calculation does what you expect it to
-    var desiredScrollTop = verseRect.top + centerColumn.scrollTop - centerColumnRect.top - (centerColumnRect.height - verseRect.height) / 2;
-
-    // Finally we scroll to the right location using another built in function.
-    // The 'smooth' value means that this is animated rather than happening instantly
-    centerColumn.scrollTo({
-        top: desiredScrollTop,
-        behavior: 'smooth'
-    })
-}
 
 
 // TODO write a function to initialize the svg properly
@@ -242,6 +246,6 @@ async function initialize() {
 
 initialize();
 
-// // TODO add event listeners to the buttons
-// document.getElementById("forward-button").addEventListener("click", forwardClicked);
-// document.getElementById("backward-button").addEventListener("click", backwardClicked);
+// TODO add event listeners to the buttons
+document.getElementById("forward-button").addEventListener("click", forwardClicked);
+document.getElementById("backward-button").addEventListener("click", backwardClicked);
