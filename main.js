@@ -171,6 +171,7 @@ function updateBarChart(data, dataCounts, title = "", yMax = 400) {
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
         .style("fill", "white")
+        .style("font-family", "sans-serif")
         .text(title);
 }
 

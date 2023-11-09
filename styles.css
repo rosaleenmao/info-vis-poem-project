@@ -11,7 +11,7 @@ header {
   background-color: rgb(153, 0, 0);
   text-align: center;
   color: white;
-  height: 100px;
+  height: 80px;
 }
 
 .title {
@@ -25,7 +25,7 @@ header {
   /* vh is the viewheight, you should use this VERY sparingly, this situation is ok because we're limiting what the user can do */
   /* we'll minus 150px as this is the height we have manually defined the header and footer to be combined (100px + 50px)*/
   /* If we changed the height of the header and footer we'd have to change this here too! */
-  min-height: calc(100vh - 150px);
+  min-height: calc(100vh - 130px);
 }
 
 .left-column {
@@ -99,6 +99,7 @@ footer {
   padding: 0px;
   font-weight: 100;
   color: #afafaf;
+  font-family: sans-serif;
 }
 
 img {
@@ -106,13 +107,12 @@ img {
 }
 
 svg {
-  background-color: #585858;
+  background-color: #7a7070;
 }
 
 /* TODO add css classes for active-verse and active-line */
 .active-verse {
   font-weight: 900;
-  color: #555;
 }
 
 .active-line {
@@ -126,5 +126,6 @@ svg {
 
 #svgDescription {
   margin: 20px;
-  color:#555;
+  color: black;
+  font-family: sans-serif;
 }
