@@ -1,7 +1,6 @@
 // Global variables
 let svg = d3.select("#svg");
 let keyframeIndex = 0;
-let transitionDuration = 500;
 
 // Define the height and width of the svg as global variables
 const width = 500;
@@ -28,19 +27,19 @@ let keyframes = [
         activeVerse: 4,
         activeLines: [1, 2],
         imgUpdate: "verse4.png",
-        // svgUpdate: drawRawGraph,
+        svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 5,
         activeLines: [1, 2],
         imgUpdate: "verse5.png",
-        // svgUpdate: drawAssaultGraph,
+        svgUpdate: drawAssaultGraph,
     },
     {
         activeVerse: 6,
         activeLines: [1, 2],
         imgUpdate: "verse6.png",
-        // svgUpdate: drawRawGraph,
+        svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 7,
@@ -51,26 +50,29 @@ let keyframes = [
         activeVerse: 8,
         activeLines: [1, 2],
         imgUpdate: "verse8.png",
-        // svgUpdate: drawRawGraph,
+        svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 9,
         activeLines: [1, 2],
         imgUpdate: "verse9.png",
-        // svgUpdate: drawSupermarketGraph,
+        svgUpdate: drawSupermarketGraph,
     },
     {
         activeVerse: 10,
         activeLines: [1, 2],
         imgUpdate: "verse10.png",
-        // svgUpdate: drawRawGraph,
+        svgUpdate: drawRawGraph,
     }
 ]
 
 // Initialize global variables to store the data when it is loaded
 let rawData;
+let rawDataCounts;
 let assaultData;
+let assaultDataCounts;
 let supermarketData;
+let supermarketDataCounts;
 
 // TODO write an asynchronous loadData function
 // You have to use the async keyword so that javascript knows that this function utilises promises and may not return immediately
@@ -79,22 +81,29 @@ async function loadData() {
     await d3.csv("data/asian_data.csv").then(data => {
         // Inside the promise we set the global variable equal to the data being loaded from the file
         rawData = data;
+        rawDataCounts = d3.rollup(data, (D) => D.length, (d) => d.Year);
+        assaultData = data.slice(0);
+        assaultData = assaultData.filter(function(d){ return d["Offense Name"] == "Simple Assault" });
+        assaultDataCounts = d3.rollup(assaultData, (D) => D.length, (d) => d.Year);
+        supermarketData = data.slice(0);
+        supermarketData = supermarketData.filter(function(d){ return (d["Location Name"] == "Grocery/Supermarket" || d["Location Name"] == "Grocery/Supermarket;Highway/Road/Alley/Street/Sidewalk")});
+        supermarketDataCounts = d3.rollup(supermarketData, (D) => D.length, (d) => d.Year);
     });
 }
 
 // bar charts
 function drawRawGraph() {
-    updateBarChart(rawData, "Anti-Asian Hate Crime Data", 400);
+    updateBarChart(rawData, rawDataCounts, "Anti-Asian Hate Crime Data", 400);
     document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes in the United States from 1991–2021.";
 }
 
 function drawAssaultGraph() {
-    updateBarChart(assaultData, "Anti-Asian Simple Assualt Data", 120);
+    updateBarChart(assaultData, assaultDataCounts, "Anti-Asian Simple Assualt Data", 120);
     document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes that were cases of Simple Assault in the United States from 1991–2021.";
 }
 
 function drawSupermarketGraph() {
-    updateBarChart(supermarketData, "Anti-Asian Supermarket Hate Crime Data", 10);
+    updateBarChart(supermarketData, supermarketDataCounts, "Anti-Asian Supermarket Hate Crime Data", 10);
     document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes in supermarkets in the United States from 1991–2021.";
 }
 
@@ -109,7 +118,7 @@ let chartHeight;
 let x;
 let y;
 
-function updateBarChart(data, title = "", yMax = 400) {
+function updateBarChart(data, dataCounts, title = "", yMax = 400) {
     svg.selectAll("*").remove();
 
     const margin = { top: 30, right: 30, bottom: 50, left: 50 };
@@ -149,14 +158,10 @@ function updateBarChart(data, title = "", yMax = 400) {
         .enter()
         .append("rect")
         .attr("x", d => x(d.Year) + margin.left)
-        .attr("y", d => y(data.reduce(function(count, entry) { 
-            return count + (entry.Year === d.Year ? 1 : 0);
-        }, 0)) + margin.top)
         .attr("width", x.bandwidth())
-        .attr("height", d => chartHeight - y(data.reduce(function(count, entry) { 
-            return count + (entry.Year === d.Year ? 1 : 0);
-        }, 0)))
         .attr("fill", "rgb(255, 210, 210)")
+        .attr("y", d => y(dataCounts.get(d.Year)) + margin.top)
+        .attr("height", d => chartHeight - y(dataCounts.get(d.Year)));
 
     // Add title
     svg.append("text")
