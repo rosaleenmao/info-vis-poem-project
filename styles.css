@@ -70,6 +70,7 @@ header {
   background-color: rgb(248, 232, 228);
   color: white;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -121,4 +122,9 @@ svg {
 /* TODO add css to create filler verse  */
 .filler-verse {
   height: 500px;
+}
+
+#svgDescription {
+  margin: 20px;
+  color:#555;
 }

@@ -12,7 +12,7 @@ let keyframes = [
         activeVerse: 1,
         activeLines: [1, 2],
         imgUpdate: "verse1.jpeg",
-        svgUpdate: drawGraph,
+        svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 2,
@@ -28,16 +28,19 @@ let keyframes = [
         activeVerse: 4,
         activeLines: [1, 2],
         imgUpdate: "verse4.png",
+        // svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 5,
         activeLines: [1, 2],
         imgUpdate: "verse5.png",
+        // svgUpdate: drawAssaultGraph,
     },
     {
         activeVerse: 6,
         activeLines: [1, 2],
         imgUpdate: "verse6.png",
+        // svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 7,
@@ -48,21 +51,26 @@ let keyframes = [
         activeVerse: 8,
         activeLines: [1, 2],
         imgUpdate: "verse8.png",
+        // svgUpdate: drawRawGraph,
     },
     {
         activeVerse: 9,
         activeLines: [1, 2],
         imgUpdate: "verse9.png",
+        // svgUpdate: drawSupermarketGraph,
     },
     {
         activeVerse: 10,
         activeLines: [1, 2],
         imgUpdate: "verse10.png",
+        // svgUpdate: drawRawGraph,
     }
 ]
 
 // Initialize global variables to store the data when it is loaded
-let asianData;
+let rawData;
+let assaultData;
+let supermarketData;
 
 // TODO write an asynchronous loadData function
 // You have to use the async keyword so that javascript knows that this function utilises promises and may not return immediately
@@ -70,13 +78,24 @@ async function loadData() {
     // Because d3.json() uses promises we have to use the keyword await to make sure each line completes before moving on to the next line
     await d3.csv("data/asian_data.csv").then(data => {
         // Inside the promise we set the global variable equal to the data being loaded from the file
-        asianData = data;
+        rawData = data;
     });
 }
 
-// TODO draw a bar chart from the rose dataset
-function drawGraph() {
-    updateBarChart(asianData, "Asian Data");
+// bar charts
+function drawRawGraph() {
+    updateBarChart(rawData, "Anti-Asian Hate Crime Data", 400);
+    document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes in the United States from 1991–2021.";
+}
+
+function drawAssaultGraph() {
+    updateBarChart(assaultData, "Anti-Asian Simple Assualt Data", 120);
+    document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes that were cases of Simple Assault in the United States from 1991–2021.";
+}
+
+function drawSupermarketGraph() {
+    updateBarChart(supermarketData, "Anti-Asian Supermarket Hate Crime Data", 10);
+    document.getElementById("svgDescription").innerText = "This chart shows the number of anti-Asian hate crimes in supermarkets in the United States from 1991–2021.";
 }
 
 // Declare global variables for the chart
@@ -90,7 +109,7 @@ let chartHeight;
 let x;
 let y;
 
-function updateBarChart(data, title = "") {
+function updateBarChart(data, title = "", yMax = 400) {
     svg.selectAll("*").remove();
 
     const margin = { top: 30, right: 30, bottom: 50, left: 50 };
@@ -106,7 +125,7 @@ function updateBarChart(data, title = "") {
         .padding(0.2);
 
     y = d3.scaleLinear()
-        .domain([0, 400])
+        .domain([0, yMax])
         .nice()
         .range([chartHeight, 0]);
 
@@ -130,14 +149,14 @@ function updateBarChart(data, title = "") {
         .enter()
         .append("rect")
         .attr("x", d => x(d.Year) + margin.left)
-        .attr("y", d => height - (data.reduce(function(count, entry) { 
+        .attr("y", d => y(data.reduce(function(count, entry) { 
+            return count + (entry.Year === d.Year ? 1 : 0);
+        }, 0)) + margin.top)
+        .attr("width", x.bandwidth())
+        .attr("height", d => chartHeight - y(data.reduce(function(count, entry) { 
             return count + (entry.Year === d.Year ? 1 : 0);
         }, 0)))
-        .attr("width", x.bandwidth())
-        .attr("height", d => (data.reduce(function(count, entry) { 
-            return count + (entry.Year === d.Year ? 1 : 0);
-        }, 0)) - margin.bottom)
-        .attr("fill", "#999")
+        .attr("fill", "rgb(255, 210, 210)")
 
     // Add title
     svg.append("text")
@@ -211,7 +230,7 @@ function updateActiveLine(vid, lid) {
 
 
 // TODO write a function to initialize the svg properly
-function initializeSVG(data) {
+function initializeSVG() {
     svg.attr("width", width);
     svg.attr("height", height);
 }
@@ -221,7 +240,7 @@ async function initialize() {
     await loadData();
 
     // TODO initalise the SVG
-    initializeSVG(asianData);
+    initializeSVG();
 
     // TODO draw the first keyframe
     drawKeyframe(keyframeIndex);
