@@ -12,6 +12,7 @@ let keyframes = [
         activeVerse: 1,
         activeLines: [1, 2],
         imgUpdate: "verse1.jpeg",
+        svgUpdate: drawGraph,
     },
     {
         activeVerse: 2,
@@ -60,7 +61,7 @@ let keyframes = [
     }
 ]
 
-// Initialize two global variables to store the data when it is loaded
+// Initialize global variables to store the data when it is loaded
 let asianData;
 
 // TODO write an asynchronous loadData function
@@ -90,39 +91,57 @@ let x;
 let y;
 
 function updateBarChart(data, title = "") {
+    svg.selectAll("*").remove();
 
-    // set the parameters for the histogram
-    const histogram = d3.histogram()
-        .value(function(d) { return d.Year; })   // I need to give the vector of value
-        .domain(x.domain())  // then the domain of the graphic
-        .thresholds(x.ticks(5)); // then the numbers of bins
+    const margin = { top: 30, right: 30, bottom: 50, left: 50 };
+    chartWidth = width - margin.left - margin.right;
+    chartHeight = height - margin.top - margin.bottom;
 
-    // And apply this function to data to get the bins
-    var bins = histogram(data);
+    chart = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    // Y axis: scale and draw:
+    x = d3.scaleBand()
+        .domain(data.map(d => d.Year))
+        .range([0, chartWidth])
+        .padding(0.2);
+
     y = d3.scaleLinear()
-      .range([chartHeight, 0]);
-    
-    // y.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-    y.domain([0, d3.max(bins, function(d) { return d.length; })]);
+        .domain([0, 400])
+        .nice()
+        .range([chartHeight, 0]);
 
-    svg.append("g")
-        .call(d3.axisLeft(y));
+    // Add x-axis
+    chart.append("g")
+        .attr("transform", "translate(0," + chartHeight + ")")
+        .call(d3.axisBottom(x)
+        .tickFormat(d3.format('d')))
+        .selectAll("text")
+        .attr("transform", "translate(-12,20)rotate(-90)");
+
+    // Add y-axis
+    chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(y))
+        .selectAll("text");
 
     // append the bar rectangles to the svg element
-    svg.selectAll("rect")
-    .data(bins)
-    .enter()
-    .append("rect")
-        .attr("x", 1)
-        .attr("transform", function(d) { return "translate(" + (x(d.x0) * .9 + 50) + "," + (y(d.length) + 30) + ")"; })
-        // .attr("width", function(d) { return x(d.x1) - x(d.x0) - 15 ; })
-        .attr("width", 50)
-        .attr("height", function(d) { return chartHeight - y(d.length); })
-        .style("fill", "#FFFFE0");
-    
+    svg.selectAll("mybar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d.Year) + margin.left)
+        .attr("y", d => height - (data.reduce(function(count, entry) { 
+            return count + (entry.Year === d.Year ? 1 : 0);
+        }, 0)))
+        .attr("width", x.bandwidth())
+        .attr("height", d => (data.reduce(function(count, entry) { 
+            return count + (entry.Year === d.Year ? 1 : 0);
+        }, 0)) - margin.bottom)
+        .attr("fill", "#999")
+
+    // Add title
     svg.append("text")
+        .attr("id", "chart-title")
         .attr("x", width / 2)
         .attr("y", 20)
         .attr("text-anchor", "middle")
@@ -161,6 +180,10 @@ function forwardClicked() {
         var newSrc = "assets/" + kf.imgUpdate;
         document.getElementById("img").src=newSrc;
     }
+
+    if (kf.svgUpdate) {
+        kf.svgUpdate();
+    }
 }
 
 // TODO write a function to reset any active lines
@@ -191,45 +214,6 @@ function updateActiveLine(vid, lid) {
 function initializeSVG(data) {
     svg.attr("width", width);
     svg.attr("height", height);
-
-    svg.selectAll("*").remove();
-
-    const margin = { top: 30, right: 30, bottom: 50, left: 50 };
-    chartWidth = width - margin.left - margin.right;
-    chartHeight = height - margin.top - margin.bottom;
-
-    chart = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    x = d3.scaleLinear()
-        .domain([1990, 2022])
-        .range([0, chartWidth]);
-
-    y = d3.scaleLinear()
-        .domain([])
-        .nice()
-        .range([chartHeight, 0]);
-
-    // Add x-axis
-    chart.append("g")
-        .attr("transform", "translate(0," + chartHeight + ")")
-        .call(d3.axisBottom(x));
-
-    // Add y-axis
-    chart.append("g")
-        .attr("class", "y-axis")
-        .call(d3.axisLeft(y))
-        .selectAll("text");
-
-    // Add title
-    svg.append("text")
-        .attr("id", "chart-title")
-        .attr("x", width / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .style("font-size", "18px")
-        .style("fill", "white")
-        .text("");
 }
 
 async function initialize() {
